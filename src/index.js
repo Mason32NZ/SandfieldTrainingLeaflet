@@ -12,8 +12,13 @@ $().ready(() => {
     // Setup Map
     map = L.map('map').setView([-41.13729606112275, 172.94677734375003], 6);
 
-    L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+    /*L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
         maxZoom: 20,
+        minZoom: 3
+    }).addTo(map);*/
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 16,
         minZoom: 3
     }).addTo(map);
 
@@ -82,6 +87,9 @@ function processData(response) {
 
     // Create rows for country totals
     _.chain(output)
+        .filter((p) => {
+            return !((!!p.country && p.country.includes('Diamond Princess')) || (!!p.state && p.state.includes('Diamond Princess')))
+        })
         .groupBy('country')
         .filter((group) => {
             var c = 0;
@@ -91,18 +99,30 @@ function processData(response) {
             return c <= 0;
         })
         .each((group) => {
-            var data = {
-                id: new Hashes.MD5().hex(`${p.country}${null}`),
-                country: p.country,
+            output.push({
+                id: new Hashes.MD5().hex(`${group[0].country}${null}`),
+                country: group[0].country,
                 state: null,
                 lat: null,
                 lng: null,
                 infected: _.reduce(group, (m, p) => { return m + p.infected; }, 0),
                 recovered: _.reduce(group, (m, p) => { return m + p.recovered; }, 0),
                 dead: _.reduce(group, (m, p) => { return m + p.dead; }, 0)
-            };
-            output.push(data);
+            });
         });
+
+    // Deal with special cases
+    var diamondPrincessData = _.filter(output, (p) => { return (!!p.country && p.country.includes('Diamond Princess')) || (!!p.state && p.state.includes('Diamond Princess')) });
+    output.push({
+        id: new Hashes.MD5().hex(`${'Diamond Princess'}${null}`),
+        country: 'Diamond Princess',
+        state: null,
+        lat: null,
+        lng: null,
+        infected: _.reduce(diamondPrincessData, (m, p) => { return m + p.infected; }, 0),
+        recovered: _.reduce(diamondPrincessData, (m, p) => { return m + p.recovered; }, 0),
+        dead: _.reduce(diamondPrincessData, (m, p) => { return m + p.dead; }, 0)
+    });
 
     return output;
 }
@@ -116,13 +136,15 @@ function plotData() {
 }
 
 function plotDataPoint(data) {
-    L.circle([data.lat, data.lng], {
-        color: 'red',
-        fillColor: '#f03',
-        fillOpacity: 0.1,
-        stroke: false,
-        radius: calcRadius(data)
-    }).bindPopup(`<b>${data.country}${!!data.state ? ', ' + data.state : ''}</b><br>Infected: ${data.infected}<br>Recovered: ${data.recovered}<br>Dead: ${data.dead}`).addTo(map);
+    if (!!data.lat && !!data.lng) {
+        L.circle([data.lat, data.lng], {
+            color: 'red',
+            fillColor: '#f03',
+            fillOpacity: 0.1,
+            stroke: false,
+            radius: calcRadius(data)
+        }).bindPopup(`<b>${data.country}${!!data.state ? ', ' + data.state : ''}</b><br>Infected: ${data.infected}<br>Recovered: ${data.recovered}<br>Dead: ${data.dead}`).addTo(map);
+    };
 }
 
 function calcRadius(data) {
