@@ -12,15 +12,36 @@ $().ready(() => {
     // Setup Map
     map = L.map('map').setView([-41.13729606112275, 172.94677734375003], 6);
 
-    /*L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
         maxZoom: 20,
+        minZoom: 3
+    }).addTo(map);
+
+    /*L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 16,
         minZoom: 3
     }).addTo(map);*/
 
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 16,
-        minZoom: 3
-    }).addTo(map);
+    // Test GitHub JSON
+    $.ajax({
+        url: 'https://raw.githubusercontent.com/Mason32NZ/SandfieldTrainingLeaflet/master/data/ne_countries_simplified.json',
+        success: (data) => {
+            L.geoJSON(JSON.parse(data), {
+                style: {
+                    weight: 1,
+                    color: "#ffffff",
+                    opacity: 0.6,
+                    fillColor: '#8a8a8a',
+                    fillOpacity: 0.4
+                },
+                onEachFeature: (feature, layer) => {
+                    if (!!feature.properties && !!feature.properties.NAME) {
+                        layer.bindPopup(feature.properties.NAME);
+                    }
+                }
+            }).addTo(map);
+        }
+    });
 
     // Get Data
     var lastUpdated = localStorage.getItem('lastUpdated');
@@ -138,11 +159,13 @@ function plotData() {
 function plotDataPoint(data) {
     if (!!data.lat && !!data.lng) {
         L.circle([data.lat, data.lng], {
-            color: 'red',
-            fillColor: '#f03',
-            fillOpacity: 0.1,
+            radius: calcRadius(data),
             stroke: false,
-            radius: calcRadius(data)
+            weight: 1,
+            color: "#ff0000",
+            opacity: 0.6,
+            fillColor: '#c90000',
+            fillOpacity: 0.4
         }).bindPopup(`<b>${data.country}${!!data.state ? ', ' + data.state : ''}</b><br>Infected: ${data.infected}<br>Recovered: ${data.recovered}<br>Dead: ${data.dead}`).addTo(map);
     };
 }
