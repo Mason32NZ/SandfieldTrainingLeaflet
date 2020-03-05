@@ -18,7 +18,8 @@ $().ready(() => {
 
     L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
         maxZoom: 20,
-        minZoom: 3
+        minZoom: 3/*,
+        noWrap: true*/
     }).addTo(map);
 
     /*L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
@@ -35,8 +36,6 @@ $().ready(() => {
             plotCSSEVirusData(json);
         }).then(() => {
             // Add Layers
-            map.custom.layerGroups.countriesGeoJSON.setZIndex(1);
-            map.custom.layerGroups.csseVirusData.setZIndex(2);
             map.addLayer(map.custom.layerGroups.countriesGeoJSON);
             map.addLayer(map.custom.layerGroups.csseVirusData);
 
@@ -149,8 +148,8 @@ function getCSSEVirusDataType(type) {
             .map((p) => {
                 var d = Object.keys(p)[Object.keys(p).length-1];
                 var obj = {
-                    country: !!p['Country/Region'] ? p['Country/Region'] : `${p['Province/State']}1`, // Some join wizardry for the groupBy in getCSSEVirusData().
-                    state: !!p['Province/State'] ? p['Province/State'] : `${p['Country/Region']}2`, // This gets cleaned up later.
+                    country: !!p['Country/Region'] ? p['Country/Region'] : null,
+                    state: !!p['Province/State'] ? p['Province/State'] : null,
                     date: d,
                     lat: Number(p['Lat']),
                     lng: Number(p['Long'])
@@ -170,12 +169,10 @@ function getCSSEVirusData() {
                 var combinedArray = confirmedJson.concat(deathsJson.concat(recoveredJson));
                 var json = _.chain(combinedArray)
                     .groupBy((p) => {
-                        return p.country && p.state;
+                        return `${p.country}${p.state}`;
                     })
                     .map((g) => {
                         var obj = Object.assign({}, ...g)
-                        obj.country = obj.country == `${obj.state}1` ? null : obj.country;
-                        obj.state = obj.state == `${obj.country}2` ? null : obj.state;
                         return obj;
                     }).value();
                 return json;

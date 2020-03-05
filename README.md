@@ -1,6 +1,8 @@
-# Sandfield Training: Leaftlet.js and GeoJSON
+# Sandfield Training: Leaftlet.js (and GeoJSON)
 
 This is the repo for the Sandfield training of 06/03/2020 by Mason Galland.
+
+See the related presentation slide show [here](https://docs.google.com/presentation/d/1iGdKCP3Dr7uYqI88oaLS0eGniOq8Dbamo2VpuXJWEUs/edit?usp=sharing).
 
 When I first endeavored on this quest I thought to myself _"This will be easy, I will just show off a few basic features of this cute map library"_, I was so wrong, finding myself side tracked and falling down the rabbit hole of GeoJSON, geo data optimization, and everything in between. 
 
